@@ -43,9 +43,8 @@
 }
 
 .statWrapper{
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   column-gap: 20px;
 }
 
@@ -58,6 +57,11 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh
+}
+
+.buttonsWrapper{
+  display: flex;
+  column-gap: 40px;
 }
 
 label {

@@ -9,22 +9,25 @@ const base_urls = {
 const per_page = 100;
 
 function App() {
-    const [pull_requests_statistic, setPullRequestsStatistic] = useState({ total_count: '', closed: '', open: '' });
+    const [pull_requests_statistic, setPullRequestsStatistic] = useState({
+        total_count: '...',
+        closed: '...',
+        open: '...',
+    });
     const [pull_requests, setPullRequests] = useState([]);
-    const [commits, setCommits] = useState({ total_count: '' });
-    // const [winners, setWinners] = useState({ logins: [], max_pr_count: '' });
+    const [commits, setCommits] = useState({ total_count: '...' });
     const [winners, setWinners] = useState([]);
     const [range, setRange] = useState({ from: '', to: '' });
     const [is_loading, setIsLoading] = useState(false);
     const [repo, setRepo] = useState('');
-    const [is_checked, setIsChecked] = useState({ deriv_app: false, deriv_com: false });
+    const [is_checked, setIsChecked] = useState({ deriv_app: true, deriv_com: false });
 
     useEffect(() => {
         setRepo(is_checked.deriv_app ? 'deriv-app' : 'deriv-com');
     }, [is_checked]);
 
     useEffect(() => {
-        if (!pull_requests_statistic.total_count) return;
+        if (pull_requests_statistic.total_count === '...') return;
         const pages = Math.ceil(pull_requests_statistic.total_count / per_page);
 
         const fetchPullRequests = async page => {
@@ -50,16 +53,6 @@ function App() {
                 const amount = pull_requests.filter(pr => pr.user.login === login).length;
                 res[login] = amount;
             });
-            //Deriv winner
-
-            // const max_pr_count = Math.max(...Object.values(res));
-            // const winners = Object.entries(res).reduce((acc, [login, pr_count]) => {
-            //     if (pr_count === max_pr_count) {
-            //         acc.push(login);
-            //     }
-            //     return acc;
-            // }, []);
-            // setWinners({ logins: [...winners], max_pr_count });
 
             setWinners([
                 ...Object.entries(res)
@@ -85,7 +78,7 @@ function App() {
             `${base_urls.commits}${repo}+committer-date:${range.from}..${range.to}`
         );
         const { total_count: commits_res } = await response_commits_master.json();
-        setPullRequestsStatistic({ ...pull_requests_statistic, total_count: all, closed, open: all - closed });
+        setPullRequestsStatistic({ total_count: all, closed, open: all - closed });
         setCommits({ total_count: commits_res });
     };
 
@@ -111,6 +104,14 @@ function App() {
         }
     };
 
+    const onResetClickHandler = () => {
+        setPullRequests([]);
+        setCommits({ total_count: '...' });
+        setWinners([]);
+        setRange({ from: '', to: '' });
+        setPullRequestsStatistic({ total_count: '...', closed: '...', open: '...' });
+    };
+
     if (is_loading) {
         return (
             <div className={styles.loaderWrapper}>
@@ -126,20 +127,20 @@ function App() {
                     Choose your <span style={{ textDecoration: 'line-through' }}>destiny</span> repository:
                 </h2>
                 <label>
-                    <span>deriv-com</span>
-                    <input
-                        type='checkbox'
-                        checked={is_checked.deriv_com}
-                        data-repo='deriv-com'
-                        onChange={onChangeRepoHanler}
-                    />
-                </label>
-                <label>
                     <span>deriv-app</span>
                     <input
                         type='checkbox'
                         checked={is_checked.deriv_app}
                         data-repo='deriv-app'
+                        onChange={onChangeRepoHanler}
+                    />
+                </label>
+                <label>
+                    <span>deriv-com</span>
+                    <input
+                        type='checkbox'
+                        checked={is_checked.deriv_com}
+                        data-repo='deriv-com'
                         onChange={onChangeRepoHanler}
                     />
                 </label>
@@ -149,13 +150,13 @@ function App() {
                 <div>
                     <label>
                         <span>From</span>
-                        <input type='date' data-range='from' onChange={onChangeDateHandler} />
+                        <input type='date' data-range='from' value={range.from} onChange={onChangeDateHandler} />
                     </label>
                 </div>
                 <div>
                     <label>
                         <span>To</span>
-                        <input type='date' data-range='to' onChange={onChangeDateHandler} />
+                        <input type='date' data-range='to' value={range.to} onChange={onChangeDateHandler} />
                     </label>
                 </div>
             </div>
@@ -166,12 +167,9 @@ function App() {
                 <h3>Commits to master branch: {commits.total_count}</h3>
             </div>
 
-            <h4>Pull request winners: </h4>
-            {/* {winners.logins.map(winner => {
-                return <h2 key={winner}>{`Login: ${winner} - PR's: ${winners.max_pr_count}`}</h2>;
-            })} */}
+            <h3 style={{ color: 'black' }}>Pull request winners: {winners.length !== 0 ? '' : '...'}</h3>
             {winners.length !== 0 && (
-                <table style={{ textAlign: 'left' }}>
+                <table style={{ textAlign: 'left', marginBottom: '20px' }}>
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -190,7 +188,12 @@ function App() {
                     </tbody>
                 </table>
             )}
-            <button onClick={onClickHandler}>Get pull requests statistic</button>
+            <div className={styles.buttonsWrapper}>
+                <button onClick={onClickHandler} disabled={range.from === '' || range.to === ''}>
+                    Get pull requests statistic
+                </button>
+                <button onClick={onResetClickHandler}>Reset statistic</button>
+            </div>
         </div>
     );
 }
